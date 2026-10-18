@@ -1,0 +1,5 @@
+cdmad
+obj/
+tools/__pycache__/
+data/live.json
+data/cache/
