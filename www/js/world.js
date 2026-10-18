@@ -238,12 +238,22 @@ export class World {
     this.set(id, 'powerState', prop(status === 'broken' ? 'off' : (this.night ? 'on' : 'off')));
   }
 
+  //
+  // lampPower - one streetlight on or off; a broken one stays off
+  //
+  lampPower(id, on) {
+    const l = this.byId.get(id);
+    if (!l) return;
+    const want = (on && val(l, 'status') !== 'broken') ? 'on' : 'off';
+    if (val(l, 'powerState') !== want) this.set(id, 'powerState', prop(want));
+  }
+
+  //
+  // setNight - every streetlight on (night) or off (day)
+  //
   setNight(night) {
     this.night = night;
-    for (const l of this.of('Streetlight')) {
-      const want = (night && val(l, 'status') !== 'broken') ? 'on' : 'off';
-      if (val(l, 'powerState') !== want) this.set(l.id, 'powerState', prop(want));
-    }
+    for (const l of this.of('Streetlight')) this.lampPower(l.id, night);
   }
 
   setNo2(id, v) {

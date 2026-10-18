@@ -35,7 +35,8 @@ export class MapView {
     this.onClick = onClick;                      // (kind, id)
     this.map = null;
     this.lineColour = new Map();                 // routeShortName -> colour
-    this.selected = null;
+    this.selected = null;                        // the selected bus
+    this.selectedLamp = null;
     this.online = false;
   }
 
@@ -57,8 +58,8 @@ export class MapView {
     add('lamps', 'lamps', 'circle', {
       'circle-radius': ['interpolate', ['linear'], ['zoom'], 12, 1.6, 16, 4],
       'circle-color': ['match', ['get', 'state'], 'broken', '#FF5A6E', 'on', '#FFD36B', '#4A515E'],
-      'circle-stroke-width': ['case', ['==', ['get', 'state'], 'broken'], 2, 0],
-      'circle-stroke-color': '#FF5A6E', 'circle-stroke-opacity': 0.4,
+      'circle-stroke-width': ['case', ['get', 'sel'], 3, ['==', ['get', 'state'], 'broken'], 2, 0],
+      'circle-stroke-color': ['case', ['get', 'sel'], '#ECEEF2', '#FF5A6E'], 'circle-stroke-opacity': ['case', ['get', 'sel'], 1, 0.4],
     });
     add('stops', 'stops', 'circle', { 'circle-radius': ['interpolate', ['linear'], ['zoom'], 12, 2.5, 16, 5], 'circle-color': '#0E1014', 'circle-stroke-color': '#CDD2DB', 'circle-stroke-width': 1.5 });
     add('traffic', 'traffic', 'circle', {
@@ -108,7 +109,7 @@ export class MapView {
     if (want('lamps')) {
       src('lamps', world.of('Streetlight').filter(point).map((l) => ({
         type: 'Feature', geometry: { type: 'Point', coordinates: point(l) },
-        properties: { id: l.id, state: val(l, 'status') === 'broken' ? 'broken' : (val(l, 'powerState') === 'on' ? 'on' : 'off') },
+        properties: { id: l.id, state: val(l, 'status') === 'broken' ? 'broken' : (val(l, 'powerState') === 'on' ? 'on' : 'off'), sel: l.id === this.selectedLamp },
       })));
     }
 

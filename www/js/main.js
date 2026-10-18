@@ -326,19 +326,65 @@ function renderLamps() {
 
   box.replaceChildren(
     el('div', { class: 'stat' }, el('span', {}, el('b', {}, String(lamps.length)), 'streetlights'), el('span', {}, el('b', {}, String(on.length)), 'on'), el('span', {}, el('b', {}, String(broken.length)), 'broken')),
-    el('div', { class: 'hint' }, 'Click a streetlight on the map to break it - or to repair a broken one. Real lamps: the city\'s inventory, along lines 27 and 2.'),
+    el('div', { class: 'hint' }, 'Click a streetlight on the map: switch it on or off, break or repair it. Real lamps: the city\'s inventory, along lines 27 and 2.'),
+    ...lampCard(),
     el('div', { class: 'btns' },
+      el('button', { onclick: () => allPower(true) }, 'All on'),
+      el('button', { onclick: () => allPower(false) }, 'All off'),
       el('button', { class: 'danger', onclick: () => {
         const ok = lamps.filter((l) => val(l, 'status') !== 'broken');
-        if (ok.length) lampToggle(ok[Math.floor(Math.random() * ok.length)].id);
+        if (ok.length) lampBreak(ok[Math.floor(Math.random() * ok.length)].id);
       } }, 'Break a random one'),
       el('button', { onclick: () => { for (const l of broken) world.lampStatus(l.id, 'ok'); now({ text: `${broken.length} streetlights repaired` }); }, disabled: broken.length ? null : '' }, 'Repair all')),
     el('h4', {}, 'Broken'),
+    ...(broken.length ? [] : [el('div', { class: 'hint' }, 'None.')]),
     ...broken.map((l) => el('div', { class: 'row' },
-      el('div', { class: 'head', onclick: () => map.flyTo(l.location.value.coordinates) },
+      el('div', { class: 'head', onclick: () => lampSelect(l.id) },
         el('span', { class: 'name' }, lampName(l)), el('span', { class: 'chip broken' }, 'broken'),
-        el('button', { onclick: (ev) => { ev.stopPropagation(); lampToggle(l.id); } }, 'Repair')))));
-  if (!broken.length) box.querySelector('.btns').nextSibling.after(el('div', { class: 'hint' }, 'None.'));
+        el('button', { onclick: (ev) => { ev.stopPropagation(); lampBreak(l.id); } }, 'Repair')))));
+}
+
+//
+// lampCard - the selected streetlight: its state, on / off, break / repair
+//
+function lampCard() {
+  const l = world.byId.get(map.selectedLamp);
+  if (!l) return [];
+  const broken = val(l, 'status') === 'broken';
+  const on = val(l, 'powerState') === 'on';
+  const state = broken ? 'broken' : (on ? 'on' : 'off');
+
+  return [el('div', { class: 'row sel' },
+    el('div', { class: 'head', onclick: () => map.flyTo(l.location.value.coordinates) },
+      el('span', { class: 'name' }, lampName(l)), el('span', { class: 'chip ' + (broken ? 'broken' : (on ? 'ok' : '')) }, state)),
+    el('div', { class: 'sub' }, `${val(l, 'lampType') || ''} · ${short(l.id)}`),
+    el('div', { class: 'ctl' },
+      el('button', { onclick: () => lampPower(l.id, !on), disabled: broken ? '' : null }, on ? 'Switch off' : 'Switch on'),
+      el('button', { class: broken ? '' : 'danger', onclick: () => lampBreak(l.id) }, broken ? 'Repair' : 'Break'),
+      el('button', { onclick: () => lampSelect(null) }, 'Close')))];
+}
+
+function lampSelect(id) {
+  map.selectedLamp = id;
+  map.draw(world, ['lamps']);
+  if (id) { tab('lamps'); map.flyTo(world.byId.get(id).location.value.coordinates); }
+  renderLamps();
+}
+
+function lampPower(id, on) {
+  const l = world.byId.get(id);
+  world.lampPower(id, on);
+  now({ text: `Streetlight ${lampName(l)} switched ${on ? 'on' : 'off'}` });
+}
+
+//
+// allPower - every working streetlight on or off: the Night toggle follows
+//
+function allPower(on) {
+  world.setNight(on);
+  $('night').checked = on;
+  const n = world.of('Streetlight').filter((l) => val(l, 'status') !== 'broken').length;
+  now({ text: `All ${n} working streetlights switched ${on ? 'on' : 'off'}` });
 }
 
 function lampName(l) {
@@ -346,7 +392,7 @@ function lampName(l) {
   return (a && a.streetAddress) || short(l.id);
 }
 
-function lampToggle(id) {
+function lampBreak(id) {
   const l = world.byId.get(id);
   const broken = val(l, 'status') === 'broken';
   world.lampStatus(id, broken ? 'ok' : 'broken');
@@ -420,7 +466,7 @@ function rushHour() {
 //
 function onClick(kind, id) {
   if (!world) return;
-  if (kind === 'lamp') lampToggle(id);
+  if (kind === 'lamp') lampSelect(id);
   else if (kind === 'traffic') {
     const t = world.byId.get(id);
     const jam = val(t, 'congested') !== true;

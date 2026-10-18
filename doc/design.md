@@ -126,7 +126,7 @@ The broker is the backend's child: it stops when the backend stops.
 - **Start broker + populate** (progress), **Stop**
 - per bus: speed slider (0-80 km/h), stop / go, break / repair
 - time: simulation speed ×1 - ×10; day / night (night: every working streetlight `on`)
-- click a streetlight: break / repair it
+- click a streetlight: switch it on / off, break / repair it; **All on** / **All off** (the Night toggle follows)
 - per air-quality station: NO₂ slider; **rain** (precipitation, buses 20 % slower); **traffic jam** on a
   sensor (congested, the buses near it slowed to a crawl)
 - one WebSocket to the broker; populate = `POST /ngsi-ld/v1/entityOperations/upsert?options=update` in
