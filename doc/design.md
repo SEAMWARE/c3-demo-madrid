@@ -74,13 +74,13 @@ there is one (`Streetlight`, `AirQualityObserved`, `WeatherObserved`, `TrafficFl
 
 | type | id | attributes |
 |---|---|---|
-| `PublicTransportRoute` | `urn:ngsi-ld:PublicTransportRoute:EMT-027-A` (line, direction A/B) | `name` ("27 Embajadores → Plaza de Castilla"), `routeShortName` ("27"), `routeColor` ("#0178BC"), `location` LineString (the GTFS shape, simplified to ≤ 300 points), `hasStop` ListRelationship (`objectList`, the stops in order), `length` (m) |
+| `PublicTransportRoute` | `urn:ngsi-ld:PublicTransportRoute:EMT-027-A` (line, direction A/B) | `name` ("27 Embajadores → Plaza de Castilla"), `routeShortName` ("27"), `routeColor` ("#0178BC"), `location` LineString (the GTFS shape, simplified to ≤ 300 points), `hasStop` ListRelationship (`objectList`, the stops' URIs in order), `stopDistances` (m along `location`, in `hasStop` order), `length` (m) |
 | `BusStop` | `urn:ngsi-ld:BusStop:EMT-<stop_id>` | `name`, `stopCode`, `location` Point |
 | `Bus` | `urn:ngsi-ld:Bus:EMT-<fleet number>` | `location` Point, `speed` (km/h, `unitCode` KMH), `bearing` (°), `status` (`inService`, `atStop`, `stopped`, `broken`), `occupancy` (0-100 %), `licensePlate`, `vehicleModel`, `onRoute` Relationship → route, `nextStop` Relationship → BusStop, `drivenBy` Relationship → Person |
 | `Person` | `urn:ngsi-ld:Person:driver-<n>` | `name`, `employeeNumber` - **fictional** drivers |
-| `Streetlight` | `urn:ngsi-ld:Streetlight:<the city's unit code>` | `location` Point, `status` (`ok`, `broken`), `powerState` (`on`, `off`), `lampType`, `address` |
+| `Streetlight` | `urn:ngsi-ld:Streetlight:MAD-<x>-<y>` (the city's UTM coordinates, in metres) | `location` Point, `status` (`ok`, `broken`), `powerState` (`on`, `off`), `lampType`, `address` |
 | `AirQualityObserved` | `urn:ngsi-ld:AirQualityObserved:<CODIGO>` | from the ckan bridge: `name`, `stationType`, `location`; from the snapshot / simulator: `NO2`, `PM10`, `O3` (µg/m³, `unitCode` GQ), `airQualityLevel` (`good`, `moderate`, `poor`, `veryPoor`), each with `observedAt` |
-| `WeatherObserved` | `urn:ngsi-ld:WeatherObserved:<station code>` | `name`, `location`, `temperature` (°C), `relativeHumidity` (%), `precipitation` (mm/h), `windSpeed` (m/s) |
+| `WeatherObserved` | `urn:ngsi-ld:WeatherObserved:<station code>` | `name`, `location`, `temperature` (°C), `relativeHumidity` (%), `precipitation` (mm/h, `unitCode` H67), `windSpeed` (m/s) |
 | `TrafficFlowObserved` | `urn:ngsi-ld:TrafficFlowObserved:<idelem>` | `name` (the measuring point's description), `location`, `intensity` (vehicles/h), `occupancy` (%), `load` (0-100), `congested` (boolean) |
 
 Two lines: **27** (Glorieta de Embajadores - Plaza de Castilla, the Castellana, north-south) and **2**
@@ -112,7 +112,7 @@ C, on the cor-libs (sibling checkouts, `COR_LIBS`), as c³'s backend is.
 |---|---|
 | `GET /`, `/js/*`, `/css/*`, `/data/*` | the page and the snapshot |
 | `GET /c3.json` | the descriptor |
-| `GET /api/broker` | `{ "running", "pid", "url", "uptime" }` |
+| `GET /api/broker` | `{ "running", "pid", "url", "uptime", "log" }` - the broker's log is `~/.local/share/cdmad/broker.log` |
 | `POST /api/broker/start` | starts coraine (stops a running one first); answers once `/version` answers |
 | `POST /api/broker/stop` | stops it (SIGTERM, then SIGKILL after 5 s) |
 | `POST /api/refresh` | runs `tools/snapshot.py --live`, answers `data/live.json` |
@@ -129,8 +129,14 @@ The broker is the backend's child: it stops when the backend stops.
 - click a streetlight: break / repair it
 - per air-quality station: NO₂ slider; **rain** (precipitation, buses 20 % slower); **traffic jam** on a
   sensor (congested, the buses near it slowed to a crawl)
-- one WebSocket to the broker; populate = `POST /ngsi-ld/v1/entityOperations/upsert` in batches of 100;
-  the simulation = one `POST /ngsi-ld/v1/entityOperations/update` a second with every bus that moved
+- one WebSocket to the broker; populate = `POST /ngsi-ld/v1/entityOperations/upsert?options=update` in
+  batches of 100 (`update`: the ckan bridge may have made an air-quality station already, a replacing upsert
+  would drop its `location`); the stations the bridge has not made in 20 s are upserted from the snapshot's
+  `stationsFallback`
+- the simulation = one `POST /ngsi-ld/v1/entityOperations/update` a second with every attribute that
+  changed; a control (a bus stopped, a lamp broken) is sent at once
+- a page loaded while the broker runs attaches: the world is read back from the broker
+- **Refresh from Madrid**: `data/live.json` upserted with `options=update`
 
 ## c³ - what it gains (generic, not Madrid's)
 

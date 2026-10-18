@@ -94,7 +94,7 @@ export class MapView {
   // draw - every layer from the world (draw(world, ['buses']) for some)
   //
   draw(world, which = null) {
-    if (!this.map) return;
+    if (!this.map || !this.map.getSource('buses')) return;
     const want = (s) => which === null || which.includes(s);
     const src = (s, f) => this.map.getSource(s).setData(fc(f));
 
