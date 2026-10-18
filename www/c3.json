@@ -1,0 +1,14 @@
+{
+  "name": "Madrid",
+  "broker": "@BROKER@",
+  "tenant": null,
+  "view": { "mode": "map", "center": [-3.6930, 40.4300], "zoom": 12.6, "relationships": "selected" },
+  "watch": ["PublicTransportRoute", "BusStop", "Bus", "Person", "Streetlight",
+            "AirQualityObserved", "WeatherObserved", "TrafficFlowObserved"],
+  "alerts": [
+    { "id": "streetlight-out", "title": "Streetlight out", "severity": "critical", "type": "Streetlight", "q": "status==\"broken\"" },
+    { "id": "bus-breakdown", "title": "Bus breakdown", "severity": "critical", "type": "Bus", "q": "status==\"broken\"" },
+    { "id": "no2-limit", "title": "NO₂ above the EU hourly limit (200 µg/m³)", "severity": "warning", "type": "AirQualityObserved", "q": "NO2>200" },
+    { "id": "traffic-jam", "title": "Traffic jam", "severity": "warning", "type": "TrafficFlowObserved", "q": "congested==true" }
+  ]
+}
