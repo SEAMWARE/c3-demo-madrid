@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CDMAD - Madrid</title>
+<link rel="stylesheet" href="vendor/maplibre-gl/maplibre-gl.css">
+<link rel="stylesheet" href="css/cdmad.css">
+</head>
+<body>
+<header>
+  <div class="brand"><b>CDMAD</b><span>c³ demo · Madrid</span></div>
+  <div class="broker"><span id="pill" class="pill off">broker stopped</span></div>
+  <div class="actions">
+    <button id="start" class="primary">Start broker + populate</button>
+    <button id="stop">Stop broker</button>
+    <button id="refresh" title="Today's air quality, weather and traffic, from Madrid's open data portals">Refresh from Madrid</button>
+  </div>
+</header>
+
+<div id="progress" hidden><div id="bar"></div><span id="progressText"></span></div>
+
+<main>
+  <div id="map"></div>
+
+  <aside>
+    <section class="sim">
+      <button id="play" disabled>⏸ Pause</button>
+      <label>Speed <select id="factor"><option value="1">×1</option><option value="2">×2</option><option value="5" selected>×5</option><option value="10">×10</option></select></label>
+      <label class="toggle"><input type="checkbox" id="night"> Night</label>
+      <label class="toggle"><input type="checkbox" id="rain"> Rain</label>
+    </section>
+
+    <nav class="tabs">
+      <button data-tab="buses" class="on">Buses</button>
+      <button data-tab="lamps">Streetlights</button>
+      <button data-tab="air">Air &amp; weather</button>
+      <button data-tab="traffic">Traffic</button>
+      <button data-tab="log">Log</button>
+    </nav>
+
+    <section class="tab" id="tab-buses"></section>
+    <section class="tab" id="tab-lamps" hidden></section>
+    <section class="tab" id="tab-air" hidden></section>
+    <section class="tab" id="tab-traffic" hidden></section>
+    <section class="tab" id="tab-log" hidden><ol id="log"></ol></section>
+
+    <div class="c3hint">In c³: type <b>CDMAD</b> in the broker field and press <b>Connect</b>.</div>
+  </aside>
+</main>
+
+<script type="module" src="js/main.js"></script>
+</body>
+</html>
